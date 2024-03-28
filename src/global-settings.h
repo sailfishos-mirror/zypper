@@ -74,6 +74,7 @@ struct SolverSettingsData
   zypp::TriBool _allowArchChange = zypp::indeterminate;
   zypp::TriBool _cleanDeps = zypp::indeterminate;
   zypp::TriBool _removeOrphaned = zypp::indeterminate;  // by now libsolv supports it in distupgrade only
+  zypp::TriBool _removeUnneeded = zypp::indeterminate;  // otherwise files weak-remove jobs for query result
 };
 using SolverSettings = GlobalSettingSingleton<SolverSettingsData>;
 

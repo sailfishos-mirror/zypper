@@ -458,6 +458,11 @@ static void set_solver_flags( Zypper & zypper )
     if ( !indeterminate( solverSettings._allowArchChange ) ) God->resolver()->setAllowArchChange( bool(solverSettings._allowArchChange) );
     if ( !indeterminate( solverSettings._allowVendorChange ) ) God->resolver()->setAllowVendorChange( bool(solverSettings._allowVendorChange) );
   }
+  if ( zypper.command() == ZypperCommand::REMOVE )
+  {
+    // For now just in remove. We want to avoid conflicting cleanup and update requests.
+    if ( !indeterminate( solverSettings._removeUnneeded ) ) God->resolver()->setRemoveUnneeded( bool(solverSettings._removeUnneeded) );
+  }
 }
 
 

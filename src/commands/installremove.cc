@@ -16,7 +16,7 @@
 
 using namespace zypp;
 
-//@TODO enable rug compat mode for dry run and --repo
+extern ZYpp::Ptr God;
 
 void InstallRemoveBase::fillSrOpts(SolverRequester::Options &sropts_r ) const
 {
@@ -91,6 +91,19 @@ RemoveCmd::RemoveCmd(std::vector<std::string> &&commandAliases_r) :
   _initRepos.setCompatibilityMode( CompatModeBits::EnableNewOpt | CompatModeBits::EnableRugOpt );
 }
 
+ZyppFlags::CommandGroup RemoveCmd::cmdOptions() const
+{
+  auto & set = SolverSettings::instanceNoConst();
+  ZyppFlags::CommandGroup opts = InstallRemoveBase::cmdOptions();
+  opts.options.insert( opts.options.end(), {
+    { "remove-unneeded", '\0', ZyppFlags::NoArgument, ZyppFlags::TriBoolType( set._removeUnneeded, ZyppFlags::StoreTrue ),
+      _("Remove unneeded packages.")
+    },
+
+  });
+  return opts;
+}
+
 void RemoveCmd::doReset()
 {
   InstallRemoveBase::doReset();
@@ -98,7 +111,8 @@ void RemoveCmd::doReset()
 
 int RemoveCmd::execute(Zypper &zypper, const std::vector<std::string> &positionalArgs)
 {
-  if ( positionalArgs.size() < 1 )
+  bool noArgOk = SolverSettings::instance()._removeUnneeded;
+  if ( positionalArgs.size() < 1 && not noArgOk )
   {
     zypper.out().error(
         _("Too few arguments."),
@@ -137,6 +151,13 @@ int RemoveCmd::execute(Zypper &zypper, const std::vector<std::string> &positiona
   PackageArgs::Options argopts;
   argopts.do_by_default = false;
   PackageArgs args( positionalArgs, kind, argopts );
+
+  // Some status (e.g. unneeded,orphaned) needs to be computed by
+  // an initial (empty) solver run.
+  bool needSolverEstablish = SolverSettings::instance()._removeUnneeded;
+  if ( needSolverEstablish ) {
+    God->resolver()->resolvePool();
+  }
 
   // tell the solver what we want
   SolverRequester::Options sropts;
